@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="description" content="Stride — small steps, big goals">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stride">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Stride</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface2: #242424;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0f0f0;
+  --text2: #888;
+  --text3: #555;
+  --teal: #1D9E75;
+  --teal-dim: rgba(29,158,117,0.15);
+  --purple: #7F77DD;
+  --purple-dim: rgba(127,119,221,0.15);
+  --coral: #D85A30;
+  --coral-dim: rgba(216,90,48,0.15);
+  --amber: #BA7517;
+  --amber-dim: rgba(186,117,23,0.15);
+  --blue: #378ADD;
+  --blue-dim: rgba(55,138,221,0.15);
+  --gold: #EF9F27;
+  --gold-dim: rgba(239,159,39,0.15);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow-x: hidden; }
+body { max-width: 430px; margin: 0 auto; min-height: 100dvh; }
+
+.screen { display: none; flex-direction: column; min-height: 100dvh; padding: 0 0 80px; }
+.screen.active { display: flex; }
+
+/* Header */
+.header { padding: 52px 20px 16px; }
+.header-top { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 4px; }
+.app-title { font-size: 24px; font-weight: 500; letter-spacing: -0.5px; }
+.header-date { font-size: 12px; color: var(--text2); font-family: var(--mono); }
+.greeting { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+/* Summary bar */
+.summary-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 20px 20px; }
+.summary-chip { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; }
+.summary-chip .sv { font-size: 20px; font-weight: 500; color: var(--text); }
+.summary-chip .sl { font-size: 10px; color: var(--text2); margin-top: 2px; font-family: var(--mono); }
+
+/* Goal strips */
+.goals-list { padding: 0 20px; display: flex; flex-direction: column; gap: 8px; }
+.goal-strip { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: border-color 0.15s, background 0.15s; active-scale: 0.98; }
+.goal-strip:active { background: var(--surface2); }
+.goal-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px; }
+.goal-info { flex: 1; min-width: 0; }
+.goal-name { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.goal-meta { font-size: 11px; color: var(--text2); margin-top: 3px; font-family: var(--mono); }
+.goal-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.goal-pct { font-size: 13px; font-weight: 500; font-family: var(--mono); }
+.goal-arrow { font-size: 16px; color: var(--text3); }
+.mini-bar { width: 48px; height: 3px; border-radius: 2px; background: var(--surface2); overflow: hidden; }
+.mini-fill { height: 100%; border-radius: 2px; }
+
+/* Detail screen */
+.detail-header { display: flex; align-items: center; gap: 12px; padding: 52px 20px 16px; }
+.back-btn { width: 36px; height: 36px; border-radius: 10px; border: 0.5px solid var(--border2); background: var(--surface); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--text2); flex-shrink: 0; }
+.detail-title { font-size: 18px; font-weight: 500; letter-spacing: -0.3px; }
+
+.detail-body { padding: 0 20px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+
+.card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.card-label { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--mono); margin-bottom: 12px; }
+
+/* Progress ring area */
+.prog-section { display: flex; align-items: center; gap: 16px; }
+.ring-wrap { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+.ring-wrap svg { transform: rotate(-90deg); }
+.ring-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; font-family: var(--mono); }
+.prog-stats { flex: 1; }
+.prog-big { font-size: 28px; font-weight: 500; letter-spacing: -0.5px; line-height: 1; }
+.prog-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+/* Week dots */
+.week-row { display: flex; justify-content: space-between; gap: 4px; }
+.wday { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
+.wday-label { font-size: 9px; color: var(--text3); font-family: var(--mono); }
+.wday-box { width: 100%; aspect-ratio: 1; border-radius: 6px; border: 0.5px solid var(--border2); background: var(--surface2); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; transition: all 0.15s; }
+.wday-box.done { border: none; }
+.wday-box.today-marker { border-color: var(--text2); }
+
+/* Twice daily */
+.call-rows { display: flex; flex-direction: column; gap: 10px; }
+.call-row { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--surface2); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; }
+.call-check { width: 22px; height: 22px; border-radius: 50%; border: 0.5px solid var(--border2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+.call-check.done { border: none; }
+.call-text { font-size: 13px; color: var(--text); flex: 1; }
+.call-time { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+/* Input area */
+.input-stack { display: flex; flex-direction: column; gap: 8px; }
+.input-label { font-size: 11px; color: var(--text2); font-family: var(--mono); }
+input[type=text], input[type=number], textarea, select {
+  width: 100%; padding: 11px 14px; background: var(--surface2); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text); font-size: 14px; font-family: var(--font);
+  outline: none; transition: border-color 0.15s;
+}
+input:focus, textarea:focus, select:focus { border-color: rgba(255,255,255,0.3); }
+textarea { height: 70px; resize: none; }
+select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+select option { background: var(--surface2); }
+
+/* Buttons */
+.btn-primary { width: 100%; padding: 14px; border-radius: var(--radius-sm); border: none; background: var(--text); color: var(--bg); font-size: 14px; font-weight: 500; font-family: var(--font); cursor: pointer; transition: opacity 0.15s; }
+.btn-primary:active { opacity: 0.8; }
+.btn-ghost { width: 100%; padding: 13px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); background: transparent; color: var(--text2); font-size: 13px; font-family: var(--font); cursor: pointer; }
+
+/* Reminders card */
+.reminder-list { display: flex; flex-direction: column; gap: 8px; }
+.reminder-row { display: flex; align-items: center; gap: 10px; }
+.reminder-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.reminder-text { font-size: 12px; color: var(--text2); }
+.reminder-time { font-size: 12px; font-family: var(--mono); color: var(--text); margin-left: auto; }
+
+/* Log list */
+.log-list { display: flex; flex-direction: column; gap: 0; }
+.log-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 12px; }
+.log-item:last-child { border: none; }
+.log-text { color: var(--text); flex: 1; }
+.log-time { color: var(--text3); font-family: var(--mono); margin-left: 8px; }
+
+/* Toast */
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 999; white-space: nowrap; }
+.toast.show { opacity: 1; }
+
+/* Bottom nav */
+.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: rgba(15,15,15,0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 0.5px solid var(--border); display: flex; padding: 8px 0 max(8px, env(safe-area-inset-bottom)); z-index: 100; }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px; cursor: pointer; border: none; background: none; color: var(--text3); font-size: 10px; font-family: var(--mono); transition: color 0.15s; }
+.nav-btn.active { color: var(--text); }
+.nav-icon { font-size: 20px; }
+
+/* Report screen */
+.report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.report-stat { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px; }
+.report-val { font-size: 24px; font-weight: 500; font-family: var(--mono); }
+.report-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+/* Notification banner */
+.notif-banner { margin: 0 20px; background: var(--teal-dim); border: 0.5px solid rgba(29,158,117,0.3); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.notif-text { font-size: 12px; color: var(--teal); flex: 1; }
+.notif-btn-small { font-size: 11px; font-weight: 500; color: var(--teal); white-space: nowrap; background: none; border: none; cursor: pointer; font-family: var(--font); }
+
+/* Section divider */
+.section-divider { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--mono); padding: 0 20px; margin-top: 4px; }
+
+.empty-state { text-align: center; padding: 24px; color: var(--text3); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- HOME SCREEN -->
+<div class="screen active" id="screen-home">
+  <div class="header">
+    <div class="header-top">
+      <div class="app-title">Stride</div>
+      <div class="header-date" id="header-date"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);letter-spacing:0.02em;margin-top:1px">small steps, big goals</div>
+    <div class="greeting" id="header-greeting"></div>
+  </div>
+
+  <div id="notif-banner-wrap"></div>
+
+  <div class="summary-bar">
+    <div class="summary-chip"><div class="sv" id="sum-goals">6</div><div class="sl">goals</div></div>
+    <div class="summary-chip"><div class="sv" id="sum-done">0</div><div class="sl">done today</div></div>
+    <div class="summary-chip"><div class="sv" id="sum-streak">0</div><div class="sl">day streak</div></div>
+  </div>
+
+  <div class="goals-list" id="goals-list"></div>
+</div>
+
+<!-- DETAIL SCREEN -->
+<div class="screen" id="screen-detail">
+  <div class="detail-header">
+    <div class="back-btn" onclick="goHome()">&#8592;</div>
+    <div class="detail-title" id="detail-title"></div>
+  </div>
+  <div class="detail-body" id="detail-body"></div>
+</div>
+
+<!-- REPORT SCREEN -->
+<div class="screen" id="screen-report">
+  <div class="header">
+    <div class="app-title">Weekly report</div>
+    <div class="header-date" id="report-date"></div>
+  </div>
+  <div style="padding:0 20px;display:flex;flex-direction:column;gap:12px" id="report-body"></div>
+</div>
+
+<!-- REMINDERS SCREEN -->
+<div class="screen" id="screen-reminders">
+  <div class="header">
+    <div class="header-top">
+      <div class="app-title">Reminders</div>
+      <div id="notif-status-badge"></div>
+    </div>
+    <div class="greeting">Tap + to add a new reminder to any goal</div>
+  </div>
+  <div style="padding:0 20px;display:flex;flex-direction:column;gap:12px">
+    <!-- Enable banner -->
+    <div id="rem-enable-wrap"></div>
+    <!-- Add reminder form -->
+    <div class="card">
+      <div class="card-label">Add new reminder</div>
+      <div class="input-stack">
+        <span class="input-label">Goal</span>
+        <select id="rem-goal">
+          <option value="workout">💪 Workout</option>
+          <option value="reading">📖 Read a book</option>
+          <option value="mom">📞 Call mom</option>
+          <option value="bills">💳 Bill payments</option>
+          <option value="tech">💻 Learn tech</option>
+          <option value="expenses">💰 Daily expenses</option>
+          <option value="custom">✨ Custom / other</option>
+        </select>
+        <span class="input-label">Label</span>
+        <input type="text" id="rem-label" placeholder="e.g. Evening nudge, Sunday review">
+        <span class="input-label">Time</span>
+        <input type="time" id="rem-time" value="08:00">
+        <span class="input-label">Repeat</span>
+        <select id="rem-repeat">
+          <option value="daily">Every day</option>
+          <option value="weekdays">Weekdays only (Mon–Fri)</option>
+          <option value="weekends">Weekends only (Sat–Sun)</option>
+          <option value="sunday">Sundays only</option>
+          <option value="monday">Mondays only</option>
+        </select>
+      </div>
+      <div style="height:10px"></div>
+      <button class="btn-primary" onclick="addReminder()">+ Add reminder</button>
+    </div>
+    <!-- Active reminders list -->
+    <div class="card">
+      <div class="card-label">Active reminders</div>
+      <div id="reminders-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="nav-home" onclick="showScreen('home')">
+    <span class="nav-icon">&#9632;</span>home
+  </button>
+  <button class="nav-btn" id="nav-report" onclick="showScreen('report')">
+    <span class="nav-icon">&#9650;</span>report
+  </button>
+  <button class="nav-btn" id="nav-reminders" onclick="showScreen('reminders')">
+    <span class="nav-icon">&#9711;</span>remind
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DAYS_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+const GOALS = [
+  {
+    id: 'workout',
+    name: 'Workout',
+    sub: '4 days/week · 15 mins',
+    icon: '&#128170;',
+    iconBg: 'rgba(29,158,117,0.15)',
+    color: '#1D9E75',
+    trackType: 'weekly_count',
+    target: 4,
+    unit: 'days',
+    reminders: [{ label: 'Morning nudge', time: '06:00' }],
+    reminderColor: '#1D9E75',
+  },
+  {
+    id: 'reading',
+    name: 'Read a book',
+    sub: '1 book / 2 weeks · daily pages',
+    icon: '&#128218;',
+    iconBg: 'rgba(127,119,221,0.15)',
+    color: '#7F77DD',
+    trackType: 'daily_log',
+    logType: 'reading',
+    target: 30,
+    unit: 'pages/day',
+    reminders: [{ label: 'Evening read', time: '21:00' }],
+    reminderColor: '#7F77DD',
+  },
+  {
+    id: 'mom',
+    name: 'Call mom',
+    sub: '2x daily · morning & evening',
+    icon: '&#128222;',
+    iconBg: 'rgba(216,90,48,0.15)',
+    color: '#D85A30',
+    trackType: 'twice_daily',
+    target: 2,
+    unit: 'calls/day',
+    reminders: [{ label: 'Morning call', time: '11:30' }, { label: 'Evening call', time: '17:00' }],
+    reminderColor: '#D85A30',
+  },
+  {
+    id: 'bills',
+    name: 'Bill payments',
+    sub: 'Weekly plan & track',
+    icon: '&#128179;',
+    iconBg: 'rgba(186,117,23,0.15)',
+    color: '#BA7517',
+    trackType: 'bill_tracker',
+    target: 100,
+    unit: '% paid',
+    reminders: [{ label: 'Weekly review', time: 'Sun 09:00' }],
+    reminderColor: '#BA7517',
+  },
+  {
+    id: 'tech',
+    name: 'Learn tech',
+    sub: '1 hour/day · EOD log',
+    icon: '&#128187;',
+    iconBg: 'rgba(55,138,221,0.15)',
+    color: '#378ADD',
+    trackType: 'daily_log',
+    logType: 'tech',
+    target: 60,
+    unit: 'mins/day',
+    reminders: [{ label: 'EOD check-in', time: '21:00' }],
+    reminderColor: '#378ADD',
+  },
+  {
+    id: 'expenses',
+    name: 'Daily expenses',
+    sub: 'Log all spending · EOD',
+    icon: '&#128184;',
+    iconBg: 'rgba(239,159,39,0.15)',
+    color: '#EF9F27',
+    trackType: 'expense_log',
+    target: 0,
+    unit: 'logged',
+    reminders: [{ label: 'Expense log', time: '20:00' }],
+    reminderColor: '#EF9F27',
+  },
+];
+
+function getState() {
+  try { return JSON.parse(localStorage.getItem('pg_state') || '{}'); } catch(e) { return {}; }
+}
+function saveState(s) { localStorage.setItem('pg_state', JSON.stringify(s)); }
+function getWeekKey() {
+  const d = new Date(); d.setHours(0,0,0,0);
+  const day = (d.getDay()+6)%7;
+  const mon = new Date(d); mon.setDate(d.getDate()-day);
+  return mon.toISOString().slice(0,10);
+}
+function todayKey() { return new Date().toISOString().slice(0,10); }
+function todayIdx() { return (new Date().getDay()+6)%7; }
+
+function getGoalState(id) {
+  const s = getState();
+  const wk = getWeekKey();
+  const td = todayKey();
+  if (!s[id]) s[id] = {};
+  if (!s[id][wk]) s[id][wk] = { days: [false,false,false,false,false,false,false], calls: 0 };
+  if (!s[id].logs) s[id].logs = [];
+  if (!s[id].bills) s[id].bills = [];
+  if (!s[id].expenses) s[id].expenses = {};
+  if (!s[id].expenses[td]) s[id].expenses[td] = [];
+  return s;
+}
+
+function getProgress(g) {
+  const s = getGoalState(g.id);
+  const wk = getWeekKey();
+  const td = todayKey();
+  const ws = s[g.id][wk];
+  if (g.trackType === 'weekly_count') {
+    const done = ws.days.filter(Boolean).length;
+    return { val: done, max: g.target, pct: Math.round(Math.min(done/g.target,1)*100), label: `${done}/${g.target} days` };
+  }
+  if (g.trackType === 'twice_daily') {
+    const done = ws.calls || 0;
+    return { val: done, max: 2, pct: Math.round(Math.min(done/2,1)*100), label: `${done}/2 today` };
+  }
+  if (g.trackType === 'daily_log') {
+    const done = ws.days.slice(0, todayIdx()+1).filter(Boolean).length;
+    const max = todayIdx()+1;
+    return { val: done, max, pct: Math.round(done/max*100), label: `${done}/${max} days` };
+  }
+  if (g.trackType === 'bill_tracker') {
+    const bills = s[g.id].bills || [];
+    const paid = bills.filter(b=>b.status==='Paid').length;
+    const total = bills.length;
+    return { val: paid, max: Math.max(total,1), pct: total ? Math.round(paid/total*100) : 0, label: total ? `${paid}/${total} paid` : 'No bills yet' };
+  }
+  if (g.trackType === 'expense_log') {
+    const exps = s[g.id].expenses[td] || [];
+    const total = exps.reduce((a,b) => a + (parseFloat(b.amount)||0), 0);
+    return { val: exps.length, max: 1, pct: exps.length ? 100 : 0, label: exps.length ? `₹${Math.round(total)} today` : 'Not logged' };
+  }
+  return { val:0, max:1, pct:0, label:'—' };
+}
+
+function renderHome() {
+  const today = new Date();
+  document.getElementById('header-date').textContent = today.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short' });
+  const h = today.getHours();
+  const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('header-greeting').textContent = greet;
+
+  let doneCount = 0;
+  const list = document.getElementById('goals-list');
+  list.innerHTML = GOALS.map(g => {
+    const p = getProgress(g);
+    if (p.pct === 100) doneCount++;
+    return `<div class="goal-strip" onclick="openDetail('${g.id}')">
+      <div class="goal-icon" style="background:${g.iconBg}">${g.icon}</div>
+      <div class="goal-info">
+        <div class="goal-name">${g.name}</div>
+        <div class="goal-meta">${p.label}</div>
+      </div>
+      <div class="goal-right">
+        <span class="goal-pct" style="color:${g.color}">${p.pct}%</span>
+        <div class="mini-bar"><div class="mini-fill" style="width:${p.pct}%;background:${g.color}"></div></div>
+      </div>
+      <div class="goal-arrow">&#8250;</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('sum-done').textContent = doneCount;
+  const streak = parseInt(localStorage.getItem('pg_streak')||'0');
+  document.getElementById('sum-streak').textContent = streak;
+
+  const nb = document.getElementById('notif-banner-wrap');
+  if (Notification.permission === 'default') {
+    nb.innerHTML = `<div class="notif-banner" onclick="requestNotifications()">
+      <div class="notif-text">Enable reminders to get nudges at the right time</div>
+      <button class="notif-btn-small">Enable &#8250;</button>
+    </div><div style="height:12px"></div>`;
+  } else { nb.innerHTML = '<div style="height:4px"></div>'; }
+}
+
+function openDetail(id) {
+  const g = GOALS.find(x => x.id === id);
+  document.getElementById('detail-title').textContent = g.name;
+  document.getElementById('screen-home').classList.remove('active');
+  document.getElementById('screen-detail').classList.add('active');
+  renderDetail(g);
+  updateNav('detail');
+}
+
+function goHome() {
+  document.getElementById('screen-detail').classList.remove('active');
+  document.getElementById('screen-home').classList.add('active');
+  renderHome();
+  updateNav('home');
+}
+
+function renderDetail(g) {
+  const s = getGoalState(g.id);
+  const wk = getWeekKey();
+  const td = todayKey();
+  const ws = s[g.id][wk];
+  const p = getProgress(g);
+  const ti = todayIdx();
+  let html = '';
+
+  // Progress card
+  const r = 28; const circ = 2 * Math.PI * r;
+  const offset = circ - (p.pct / 100) * circ;
+  html += `<div class="card">
+    <div class="card-label">This week's progress</div>
+    <div class="prog-section">
+      <div class="ring-wrap">
+        <svg width="72" height="72" viewBox="0 0 72 72">
+          <circle cx="36" cy="36" r="${r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"/>
+          <circle cx="36" cy="36" r="${r}" fill="none" stroke="${g.color}" stroke-width="5" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}" stroke-linecap="round"/>
+        </svg>
+        <div class="ring-center" style="color:${g.color}">${p.pct}%</div>
+      </div>
+      <div class="prog-stats">
+        <div class="prog-big" style="color:${g.color}">${p.label}</div>
+        <div class="prog-sub">${g.sub}</div>
+      </div>
+    </div>
+  </div>`;
+
+  // Track input
+  if (g.trackType === 'weekly_count') {
+    const boxes = DAYS_SHORT.map((d,i) => {
+      const done = ws.days[i];
+      const isToday = i === ti;
+      return `<div class="wday">
+        <span class="wday-label">${d}</span>
+        <div class="wday-box${done?' done':''}${isToday&&!done?' today-marker':''}"
+          style="${done?'background:'+g.color:''}"
+          onclick="toggleWeekDay('${g.id}',${i})">
+          ${done ? '&#10003;' : ''}
+        </div>
+      </div>`;
+    }).join('');
+    html += `<div class="card">
+      <div class="card-label">Tap the days you worked out</div>
+      <div class="week-row">${boxes}</div>
+    </div>`;
+  }
+  else if (g.trackType === 'twice_daily') {
+    const calls = ws.calls || 0;
+    html += `<div class="card">
+      <div class="card-label">Today's calls</div>
+      <div class="call-rows">
+        <div class="call-row" onclick="markCall('${g.id}',1)">
+          <div class="call-check${calls>=1?' done':''}" style="${calls>=1?'background:'+g.color:''}">
+            ${calls>=1?'<span style="font-size:12px;color:#fff">&#10003;</span>':''}
+          </div>
+          <div class="call-text">Morning call</div>
+          <div class="call-time">11:30 AM</div>
+        </div>
+        <div class="call-row" onclick="markCall('${g.id}',2)">
+          <div class="call-check${calls>=2?' done':''}" style="${calls>=2?'background:'+g.color:''}">
+            ${calls>=2?'<span style="font-size:12px;color:#fff">&#10003;</span>':''}
+          </div>
+          <div class="call-text">Evening call</div>
+          <div class="call-time">5:00 PM</div>
+        </div>
+      </div>
+    </div>`;
+    const wkDays = DAYS_SHORT.map((d,i) => {
+      const c = i === ti ? (ws.calls||0) : (ws['calls_'+i]||0);
+      const pct = Math.min(c/2,1);
+      return `<div class="wday"><span class="wday-label">${d}</span>
+        <div class="wday-box${pct===1?' done':''}" style="${pct===1?'background:'+g.color:pct>0?'background:rgba(216,90,48,0.4)':''}">
+          ${pct===1?'&#10003;':c||''}
+        </div></div>`;
+    }).join('');
+    html += `<div class="card"><div class="card-label">Week at a glance</div><div class="week-row">${wkDays}</div></div>`;
+  }
+  else if (g.trackType === 'daily_log') {
+    const ph = g.logType === 'tech' ? 'Topic studied today...' : 'Book title & pages read...';
+    const extraLabel = g.logType === 'tech' ? 'Minutes studied' : 'Pages read';
+    html += `<div class="card">
+      <div class="card-label">Log today</div>
+      <div class="input-stack">
+        <span class="input-label">${g.logType==='tech'?'What did you learn?':'What did you read?'}</span>
+        <input type="text" id="log-topic" placeholder="${ph}">
+        <span class="input-label">${extraLabel}</span>
+        <input type="number" id="log-num" placeholder="${g.logType==='tech'?'60':'30'}" min="0">
+      </div>
+      <div style="height:10px"></div>
+      <button class="btn-primary" onclick="saveLog('${g.id}')">Save today's log</button>
+    </div>`;
+    const wkBoxes = DAYS_SHORT.map((d,i) => {
+      const done = ws.days[i];
+      return `<div class="wday"><span class="wday-label">${d}</span>
+        <div class="wday-box${done?' done':''}" style="${done?'background:'+g.color:''}">
+          ${done?'&#10003;':''}
+        </div></div>`;
+    }).join('');
+    html += `<div class="card"><div class="card-label">Daily streak</div><div class="week-row">${wkBoxes}</div></div>`;
+  }
+  else if (g.trackType === 'bill_tracker') {
+    const bills = s[g.id].bills || [];
+    html += `<div class="card">
+      <div class="card-label">Add a bill</div>
+      <div class="input-stack">
+        <span class="input-label">Bill name</span>
+        <input type="text" id="log-bill" placeholder="e.g. Electricity, Netflix">
+        <span class="input-label">Amount (₹)</span>
+        <input type="number" id="log-amount" placeholder="500">
+        <span class="input-label">Status</span>
+        <select id="log-status"><option>Pending</option><option>Paid</option><option>Scheduled</option></select>
+        <span class="input-label">Due date</span>
+        <input type="text" id="log-due" placeholder="e.g. 5th, 15th of month">
+      </div>
+      <div style="height:10px"></div>
+      <button class="btn-primary" onclick="saveBill('${g.id}')">Add bill</button>
+    </div>`;
+    if (bills.length) {
+      const rows = bills.map((b,i) => `<div class="log-item">
+        <span class="log-text">${b.name} · ₹${b.amount}</span>
+        <span style="font-size:11px;color:${b.status==='Paid'?'#1D9E75':b.status==='Scheduled'?'#BA7517':'#D85A30'};margin-right:8px">${b.status}</span>
+        <span class="log-time">${b.due||''}</span>
+      </div>`).join('');
+      html += `<div class="card"><div class="card-label">Bills this month</div><div class="log-list">${rows}</div></div>`;
+    }
+  }
+  else if (g.trackType === 'expense_log') {
+    const exps = s[g.id].expenses[td] || [];
+    const total = exps.reduce((a,b) => a+(parseFloat(b.amount)||0),0);
+    html += `<div class="card">
+      <div class="card-label">Log expense</div>
+      <div class="input-stack">
+        <span class="input-label">Category</span>
+        <select id="log-cat"><option>Food</option><option>Transport</option><option>Shopping</option><option>Bills</option><option>Entertainment</option><option>Health</option><option>Other</option></select>
+        <span class="input-label">Amount (₹)</span>
+        <input type="number" id="log-exp-amt" placeholder="0" min="0">
+        <span class="input-label">Note (optional)</span>
+        <input type="text" id="log-exp-note" placeholder="e.g. Lunch, auto fare">
+      </div>
+      <div style="height:10px"></div>
+      <button class="btn-primary" onclick="saveExpense('${g.id}')">Add expense</button>
+    </div>`;
+    if (exps.length) {
+      const rows = exps.slice().reverse().map(e => `<div class="log-item">
+        <span class="log-text">${e.cat}${e.note?' · '+e.note:''}</span>
+        <span class="log-time">₹${Math.round(parseFloat(e.amount)||0)}</span>
+      </div>`).join('');
+      html += `<div class="card">
+        <div class="card-label">Today · Total ₹${Math.round(total)}</div>
+        <div class="log-list">${rows}</div>
+      </div>`;
+    }
+  }
+
+  // Reminders
+  const remRows = g.reminders.map(r => `<div class="reminder-row">
+    <div class="reminder-dot" style="background:${g.color}"></div>
+    <span class="reminder-text">${r.label}</span>
+    <span class="reminder-time">${r.time}</span>
+  </div>`).join('');
+  html += `<div class="card"><div class="card-label">Reminders</div><div class="reminder-list">${remRows}</div></div>`;
+
+  // Recent logs
+  const logs = (s[g.id].logs || []).slice(-5).reverse();
+  if (logs.length) {
+    const logRows = logs.map(l => `<div class="log-item"><span class="log-text">${l.text}</span><span class="log-time">${l.ts}</span></div>`).join('');
+    html += `<div class="card"><div class="card-label">Recent logs</div><div class="log-list">${logRows}</div></div>`;
+  }
+
+  document.getElementById('detail-body').innerHTML = html;
+}
+
+function toggleWeekDay(id, i) {
+  const s = getGoalState(id);
+  const wk = getWeekKey();
+  s[id][wk].days[i] = !s[id][wk].days[i];
+  saveState(s);
+  toast(s[id][wk].days[i] ? 'Workout logged!' : 'Unmarked');
+  renderDetail(GOALS.find(g=>g.id===id));
+}
+
+function markCall(id, n) {
+  const s = getGoalState(id);
+  const wk = getWeekKey();
+  const cur = s[id][wk].calls || 0;
+  if (cur < n) {
+    s[id][wk].calls = n;
+    addLog(s, id, n===1 ? 'Morning call done' : 'Evening call done');
+    saveState(s);
+    toast('Call logged!');
+    renderDetail(GOALS.find(g=>g.id===id));
+  }
+}
+
+function saveLog(id) {
+  const topic = document.getElementById('log-topic')?.value?.trim();
+  const num = document.getElementById('log-num')?.value;
+  if (!topic) { toast('Please enter what you did'); return; }
+  const s = getGoalState(id);
+  const wk = getWeekKey();
+  const g = GOALS.find(x=>x.id===id);
+  s[id][wk].days[todayIdx()] = true;
+  const label = g.logType==='tech' ? `${topic} · ${num||'?'} min` : `${topic} · ${num||'?'} pages`;
+  addLog(s, id, label);
+  saveState(s);
+  toast('Logged!');
+  renderDetail(g);
+}
+
+function saveBill(id) {
+  const name = document.getElementById('log-bill')?.value?.trim();
+  const amount = document.getElementById('log-amount')?.value;
+  const status = document.getElementById('log-status')?.value;
+  const due = document.getElementById('log-due')?.value?.trim();
+  if (!name) { toast('Enter bill name'); return; }
+  const s = getGoalState(id);
+  if (!s[id].bills) s[id].bills = [];
+  s[id].bills.push({ name, amount, status, due });
+  addLog(s, id, `${name} ₹${amount||'—'} ${status}`);
+  saveState(s);
+  toast('Bill added!');
+  renderDetail(GOALS.find(g=>g.id===id));
+}
+
+function saveExpense(id) {
+  const cat = document.getElementById('log-cat')?.value;
+  const amount = document.getElementById('log-exp-amt')?.value;
+  const note = document.getElementById('log-exp-note')?.value?.trim();
+  if (!amount || parseFloat(amount)<=0) { toast('Enter a valid amount'); return; }
+  const s = getGoalState(id);
+  const td = todayKey();
+  if (!s[id].expenses) s[id].expenses = {};
+  if (!s[id].expenses[td]) s[id].expenses[td] = [];
+  s[id].expenses[td].push({ cat, amount, note });
+  s[id][getWeekKey()].days[todayIdx()] = true;
+  addLog(s, id, `${cat} ₹${Math.round(parseFloat(amount))}${note?' · '+note:''}`);
+  saveState(s);
+  toast('Expense added!');
+  renderDetail(GOALS.find(g=>g.id===id));
+}
+
+function addLog(s, id, text) {
+  if (!s[id].logs) s[id].logs = [];
+  const now = new Date();
+  const ts = now.toLocaleDateString('en-IN',{day:'numeric',month:'short'}) + ' ' + now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  s[id].logs.push({ text, ts });
+  if (s[id].logs.length > 50) s[id].logs = s[id].logs.slice(-50);
+}
+
+function renderReport() {
+  const today = new Date();
+  document.getElementById('report-date').textContent = 'Week of ' + today.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+  let html = '<div class="report-grid">';
+  GOALS.forEach(g => {
+    const p = getProgress(g);
+    html += `<div class="report-stat" onclick="openDetail('${g.id}')">
+      <div style="font-size:20px;margin-bottom:6px">${g.icon}</div>
+      <div class="report-val" style="color:${g.color}">${p.pct}%</div>
+      <div class="report-label">${g.name}</div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">${p.label}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  let tips = '<div class="card" style="margin-top:4px"><div class="card-label">This week\'s snapshot</div><div class="log-list">';
+  GOALS.forEach(g => {
+    const p = getProgress(g);
+    const icon = p.pct === 100 ? '&#10003;' : p.pct >= 50 ? '&#9679;' : '&#9675;';
+    const color = p.pct === 100 ? '#1D9E75' : p.pct >= 50 ? '#BA7517' : '#555';
+    tips += `<div class="log-item">
+      <span style="color:${color};margin-right:8px;font-size:12px">${icon}</span>
+      <span class="log-text">${g.name}</span>
+      <span class="log-time" style="color:${g.color}">${p.label}</span>
+    </div>`;
+  });
+  tips += '</div></div>';
+  html += tips;
+
+  document.getElementById('report-body').innerHTML = html;
+}
+
+// ── Reminder storage ─────────────────────────────────────────────────────────
+const DEFAULT_REMINDERS = [
+  { id: 'r1', goal: 'workout',  label: 'Morning nudge',      time: '06:00', repeat: 'daily' },
+  { id: 'r2', goal: 'mom',      label: 'Morning call',       time: '11:30', repeat: 'daily' },
+  { id: 'r3', goal: 'mom',      label: 'Evening call',       time: '17:00', repeat: 'daily' },
+  { id: 'r4', goal: 'expenses', label: 'Expense log',        time: '20:00', repeat: 'daily' },
+  { id: 'r5', goal: 'reading',  label: 'Evening read',       time: '21:00', repeat: 'daily' },
+  { id: 'r6', goal: 'tech',     label: 'EOD check-in',       time: '21:00', repeat: 'daily' },
+  { id: 'r7', goal: 'bills',    label: 'Weekly bill review', time: '09:00', repeat: 'sunday' },
+];
+
+function getReminders() {
+  try {
+    const saved = localStorage.getItem('pg_reminders');
+    return saved ? JSON.parse(saved) : [...DEFAULT_REMINDERS];
+  } catch(e) { return [...DEFAULT_REMINDERS]; }
+}
+function saveReminders(list) { localStorage.setItem('pg_reminders', JSON.stringify(list)); }
+
+const GOAL_META = {
+  workout:  { name: 'Workout',        icon: '💪', color: '#1D9E75' },
+  reading:  { name: 'Read a book',    icon: '📖', color: '#7F77DD' },
+  mom:      { name: 'Call mom',       icon: '📞', color: '#D85A30' },
+  bills:    { name: 'Bill payments',  icon: '💳', color: '#BA7517' },
+  tech:     { name: 'Learn tech',     icon: '💻', color: '#378ADD' },
+  expenses: { name: 'Daily expenses', icon: '💰', color: '#EF9F27' },
+  custom:   { name: 'Custom',         icon: '✨', color: '#888' },
+};
+
+const REPEAT_LABELS = {
+  daily: 'Every day', weekdays: 'Mon–Fri', weekends: 'Sat–Sun', sunday: 'Sundays', monday: 'Mondays'
+};
+
+// ── Reminders screen ──────────────────────────────────────────────────────────
+function renderReminders() {
+  // Enable banner
+  const wrap = document.getElementById('rem-enable-wrap');
+  if (Notification.permission === 'default') {
+    wrap.innerHTML = `<div class="notif-banner" onclick="requestNotifications()">
+      <div class="notif-text">Tap to enable notifications so reminders fire on time</div>
+      <button class="notif-btn-small">Enable ›</button>
+    </div>`;
+  } else if (Notification.permission === 'granted') {
+    wrap.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:4px 0">
+      <span style="width:8px;height:8px;border-radius:50%;background:#1D9E75;display:inline-block"></span>
+      <span style="font-size:12px;color:var(--text2)">Notifications enabled</span>
+    </div>`;
+  } else {
+    wrap.innerHTML = `<div style="font-size:12px;color:#D85A30;padding:4px 0">⚠ Notifications blocked. Enable in your browser settings.</div>`;
+  }
+
+  // Status badge
+  const badge = document.getElementById('notif-status-badge');
+  const rems = getReminders();
+  badge.innerHTML = `<span style="font-size:12px;color:var(--text3);font-family:var(--mono)">${rems.length} active</span>`;
+
+  // List
+  const el = document.getElementById('reminders-list');
+  if (!rems.length) { el.innerHTML = '<div class="empty-state">No reminders yet. Add one above.</div>'; return; }
+
+  el.innerHTML = rems.map(r => {
+    const meta = GOAL_META[r.goal] || GOAL_META.custom;
+    const t12 = to12h(r.time);
+    return `<div class="log-item" style="padding:10px 0;align-items:flex-start">
+      <div style="display:flex;flex-direction:column;flex:1;gap:3px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:14px">${meta.icon}</span>
+          <span style="font-size:13px;font-weight:500;color:var(--text)">${r.label}</span>
+          <span style="font-size:11px;font-family:var(--mono);color:${meta.color};margin-left:auto">${t12}</span>
+        </div>
+        <div style="display:flex;gap:8px;padding-left:22px">
+          <span style="font-size:10px;color:var(--text3)">${meta.name}</span>
+          <span style="font-size:10px;color:var(--text3)">·</span>
+          <span style="font-size:10px;color:var(--text3)">${REPEAT_LABELS[r.repeat]||r.repeat}</span>
+        </div>
+      </div>
+      <button onclick="deleteReminder('${r.id}')" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0 0 0 12px;line-height:1;flex-shrink:0">×</button>
+    </div>`;
+  }).join('<div style="height:0.5px;background:var(--border);margin:0"></div>');
+}
+
+function to12h(time) {
+  const [h, m] = time.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function addReminder() {
+  const goal   = document.getElementById('rem-goal').value;
+  const label  = document.getElementById('rem-label').value.trim();
+  const time   = document.getElementById('rem-time').value;
+  const repeat = document.getElementById('rem-repeat').value;
+  if (!label) { toast('Please add a label'); return; }
+  if (!time)  { toast('Please pick a time'); return; }
+  const rems = getReminders();
+  const id = 'r' + Date.now();
+  rems.push({ id, goal, label, time, repeat });
+  saveReminders(rems);
+  pushRemindersToSW(rems);
+  document.getElementById('rem-label').value = '';
+  toast('Reminder added!');
+  renderReminders();
+}
+
+function deleteReminder(id) {
+  const rems = getReminders().filter(r => r.id !== id);
+  saveReminders(rems);
+  pushRemindersToSW(rems);
+  toast('Reminder removed');
+  renderReminders();
+}
+
+function pushRemindersToSW(rems) {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.ready.then(reg => {
+    reg.active?.postMessage({ type: 'SET_REMINDERS', reminders: rems });
+  });
+}
+
+// ── Screens ───────────────────────────────────────────────────────────────────
+function showScreen(name) {
+  ['home','detail','report','reminders'].forEach(s => {
+    const el = document.getElementById('screen-'+s);
+    if (el) el.classList.remove('active');
+  });
+  document.getElementById('screen-'+name).classList.add('active');
+  updateNav(name);
+  if (name==='home') renderHome();
+  if (name==='report') renderReport();
+  if (name==='reminders') renderReminders();
+}
+
+function updateNav(active) {
+  ['home','report','reminders'].forEach(n => {
+    const el = document.getElementById('nav-'+n);
+    if (el) el.classList.toggle('active', n === active);
+  });
+}
+
+function requestNotifications() {
+  if (!('Notification' in window)) { toast('Notifications not supported'); return; }
+  Notification.requestPermission().then(perm => {
+    if (perm === 'granted') {
+      toast('Reminders enabled!');
+      pushRemindersToSW(getReminders());
+      renderHome();
+      renderReminders();
+    } else {
+      toast('Enable notifications in browser settings');
+    }
+  });
+}
+
+function scheduleReminders() {
+  pushRemindersToSW(getReminders());
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// Init
+renderHome();
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
