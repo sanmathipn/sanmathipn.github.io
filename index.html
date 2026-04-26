@@ -499,7 +499,7 @@ function renderHome() {
   const today = new Date();
   const h = today.getHours();
   document.getElementById('hdr-date').innerHTML = today.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-  document.getElementById('hdr-greet').textContent = h<12?'Good morning':'h<17?Good afternoon':'Good evening';
+  document.getElementById('hdr-greet').textContent = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
 
   // Notif banner
   const nw = document.getElementById('notif-wrap');
