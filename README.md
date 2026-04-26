@@ -1,23 +1,80 @@
-# Stride — small steps, big goals
+# Stride v3 — small steps, big goals
 
-Your personal daily tracker for all 6 goals with reminders.
+Cross-device sync · Google Sheets database · History · Reminders manager
 
 ---
 
-## What's inside
+## What's new in v3
+
+- ✅ **Google Sheets sync** — all data stored in your own Google Sheet
+- ✅ **Cross-device** — phone and laptop always in sync
+- ✅ **History tab** — last 8 weeks per goal with visual bar chart
+- ✅ **Reminders manager** — add/delete reminders from inside the app
+- ✅ **Data safe forever** — nothing lost even if you reinstall
+
+---
+
+## Files in this zip
 
 | File | Purpose |
 |---|---|
-| `index.html` | The full app (all screens, all logic) |
-| `sw.js` | Service worker — offline + reminders |
-| `manifest.json` | Makes it installable on Android & Windows |
-| `icons/` | App icons for all screen sizes |
+| `index.html` | Full Stride app |
+| `sw.js` | Service worker — offline + push reminders |
+| `manifest.json` | PWA installability |
+| `icons/` | App icons |
+| `google-apps-script.js` | Paste this into Google Sheets (see setup below) |
 
 ---
 
-## Reminders configured
+## Step 1 — Deploy your Google Sheet backend (one time, ~15 mins)
 
-| Goal | Time | Every |
+### 1a. Create the sheet
+Go to **sheets.new** → name it **Stride Data**
+
+### 1b. Open Apps Script
+In your sheet: **Extensions → Apps Script**
+Delete all existing code. Paste the full contents of `google-apps-script.js`. Click **Save (💾)**.
+
+### 1c. Deploy as Web App
+- Click **Deploy → New deployment**
+- Click the gear icon → select **Web app**
+- Set **Execute as** → Me
+- Set **Who has access** → Anyone
+- Click **Deploy**
+- Click **Authorize access** → choose your Google account → Allow
+- Copy the **Web app URL** (starts with `https://script.google.com/macros/s/...`)
+
+### 1d. Connect Stride
+Open the Stride app → it will show a Setup screen after 2 seconds.
+Paste your Web app URL → tap **Connect & test**.
+You should see "Connected!" ✅
+
+---
+
+## Step 2 — Upload to GitHub & enable Pages
+
+1. Go to `https://github.com/sanmathipn/stride`
+2. Click **Add file → Upload files**
+3. Drag in ALL files from this zip (keep icons/ folder)
+4. Click **Commit changes**
+5. Go to **Settings → Pages → Branch: main → Save**
+6. Wait 2 minutes → open `https://sanmathipn.github.io/stride`
+
+---
+
+## Step 3 — Install on devices
+
+**Android Chrome:**
+Menu (⋮) → Add to Home Screen → Add → Open app → Enable reminders
+
+**Windows Chrome/Edge:**
+Install icon in address bar → Install → Open from Start menu
+
+---
+
+## Reminder schedule (pre-loaded)
+
+| Goal | Time | Repeat |
 |---|---|---|
 | Workout nudge | 6:00 AM | Daily |
 | Call mom — morning | 11:30 AM | Daily |
@@ -25,58 +82,17 @@ Your personal daily tracker for all 6 goals with reminders.
 | Daily expenses | 8:00 PM | Daily |
 | Read a book | 9:00 PM | Daily |
 | Learn tech EOD | 9:00 PM | Daily |
-| Bill review | 9:00 AM | Sundays |
+| Bill payments | 9:00 AM | Sundays |
+
+Add or delete reminders anytime from the **Remind** tab inside the app.
 
 ---
 
-## How to host for free (GitHub Pages — recommended)
+## How sync works
 
-1. Go to **github.com** → Sign up free if needed
-2. Click **New repository** → name it `stride`
-3. Upload ALL files (keep the `icons/` folder)
-4. Go to **Settings → Pages → Branch: main → Save**
-5. Your app URL: `https://YOUR-USERNAME.github.io/stride`
+Every time you log data → it saves locally AND writes to your Google Sheet.
+When you open the app on another device → it reads from the same sheet.
+Works offline too — syncs automatically when back online.
 
----
-
-## Install on Android
-
-1. Open Chrome on your phone
-2. Go to your app URL
-3. Tap the **three-dot menu (⋮)** → **"Add to Home Screen"**
-4. Tap **Add** → it appears like a native app on your home screen
-5. Open it → tap **"Enable reminders"** when prompted → tap Allow
-
----
-
-## Install on Windows
-
-1. Open Chrome or Edge on your laptop
-2. Go to your app URL
-3. Look for the **install icon** in the address bar (looks like a monitor with a + sign)
-4. Click it → click **Install**
-5. The app opens in its own window from your Start menu / taskbar
-
----
-
-## Data storage
-
-All your data is saved **locally on your device** using `localStorage`.
-- Nothing is sent to any server
-- Data stays on your phone / laptop separately
-- Works fully offline once installed
-
----
-
-## Alternative: serve locally (no hosting needed)
-
-If you have Python installed:
-```
-cd stride-pwa
-python3 -m http.server 8080
-```
-Then open `http://localhost:8080` in Chrome.
-
----
-
-Built for: Android Chrome + Windows Chrome/Edge
+Your Google Sheet will have tabs:
+`Workout | Reading | CallMom | Bills | TechLearning | Expenses | WeeklyHistory | Reminders`
